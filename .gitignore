@@ -1,0 +1,25 @@
+# Output & checkpoints
+**/out/
+**/history/
+**/report/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# Archives
+*.tar.gz
+*.zip
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Pretrained models
+**/pretrained/

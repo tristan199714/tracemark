@@ -1,7 +1,6 @@
 # Output & checkpoints
 **/out/
 **/history/
-**/report/
 
 # Python
 __pycache__/

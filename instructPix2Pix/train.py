@@ -136,7 +136,7 @@ class IP2PEmbedMarkTrainer:
         return float(t.item())
 
     def _build_loader(self, train_ds):
-        num_workers = int(self.config["data"]["num_workers"])
+        num_workers = int(self.config["data"].get("num_workers", 0))
         sampler = None
         shuffle = True
         if self.distributed:

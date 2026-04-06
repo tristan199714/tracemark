@@ -36,7 +36,7 @@ SHARED_ARGS = [
     "--config",           "configs/celeba.yml",
     "--num_user",         "100",
     "--fp16",             "1",
-    "--bs_train",         "2",
+    "--bs_train",         "8",
     "--ip2p_steps",       "6",
     "--embed_dim",        "128",
     "--user_dim",         "64",
@@ -59,6 +59,20 @@ SHARED_ARGS = [
     "--batch_pbar",       "0",
     "--seed",             "1234",
 ]
+
+
+OUT_ROOT = THIS_DIR / "out"
+
+
+def has_existing_result(feature: str) -> bool:
+    feature_dir = OUT_ROOT / feature
+    if (feature_dir / "summary.json").exists() or (feature_dir / "checkpoint.pt").exists():
+        return True
+    if feature_dir.is_dir():
+        for p in feature_dir.iterdir():
+            if p.is_dir() and ((p / "summary.json").exists() or (p / "checkpoint.pt").exists()):
+                return True
+    return False
 
 
 def build_command(args, feature: str) -> List[str]:
@@ -96,6 +110,10 @@ def main():
     print()
 
     for idx, feature in enumerate(features, 1):
+        if has_existing_result(feature):
+            print(f"[{idx}/{len(features)}] {feature} [skip] already has result")
+            continue
+
         cmd = build_command(args, feature)
         print(f"[{idx}/{len(features)}] {feature}")
         print("[cmd]", " ".join(cmd))

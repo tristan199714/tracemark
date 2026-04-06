@@ -99,6 +99,11 @@ class IP2PEmbedMarkTrainer:
             list(self.writer.parameters()) + list(self.detector.parameters()),
             lr=args.lr,
         )
+        self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+            self.optimizer,
+            T_max=args.n_iter,
+            eta_min=args.lr * 0.05,
+        )
 
         self.pipe = self._build_ip2p()
         self.instruction = self._resolve_instruction(args.instruction)
@@ -151,7 +156,10 @@ class IP2PEmbedMarkTrainer:
         return loader, sampler
 
     def _build_ip2p(self):
-        dtype = torch.float16 if self.args.fp16 else torch.float32
+        # This training path backpropagates through the edit model.
+        # Keeping the frozen diffusion modules in fp32 is slower, but avoids
+        # dtype flips / VAE upcasting issues that destabilize gradients in fp16.
+        dtype = torch.float32
         pipe = StableDiffusionInstructPix2PixPipeline.from_pretrained(
             self.args.ip2p_model_id,
             torch_dtype=dtype,
@@ -186,8 +194,10 @@ class IP2PEmbedMarkTrainer:
 
     def edit(self, img01: torch.Tensor, seed: int) -> torch.Tensor:
         g = torch.Generator(device=self.device).manual_seed(seed)
+        pipe_dtype = next(self.pipe.unet.parameters()).dtype
+        vae_dtype = next(self.pipe.vae.parameters()).dtype
         image = img01.unsqueeze(0) if img01.dim() == 3 else img01
-        image = image.to(self.device)
+        image = image.to(device=self.device, dtype=pipe_dtype)
         latents = self._pipe_call_with_grad(
             prompt=self.instruction,
             image=image,
@@ -197,6 +207,7 @@ class IP2PEmbedMarkTrainer:
             image_guidance_scale=self.args.image_guidance_scale,
             output_type="latent",
         ).images
+        latents = latents.to(dtype=vae_dtype)
         imgs = self.pipe.vae.decode(
             latents / self.pipe.vae.config.scaling_factor,
             return_dict=False,
@@ -235,7 +246,7 @@ class IP2PEmbedMarkTrainer:
         fpr = np.array(fpr_list, dtype=float)
         tpr = np.array(tpr_list, dtype=float)
         order = np.argsort(fpr)
-        auc_fn = getattr(np, "trapezoid", np.trapz)
+        auc_fn = getattr(np, "trapezoid", getattr(np, "trapz", None))
         auc = float(auc_fn(tpr[order], fpr[order]))
         acc = float(np.max(1.0 - (fpr + (1.0 - tpr)) / 2.0))
         idx = np.where(fpr < 0.01)[0]
@@ -325,6 +336,9 @@ class IP2PEmbedMarkTrainer:
     @staticmethod
     def _safe_clip_similarity(folder_a: Path, folder_b: Path, device: str,
                               clip_model: str = "openai/clip-vit-base-patch32"):
+        _tv = tuple(int(x) for x in torch.__version__.split(".")[:2] if x.isdigit())
+        if _tv < (2, 6):
+            return None, f"CLIP skipped: torch {torch.__version__} < 2.6 required"
         try:
             from transformers import CLIPModel, CLIPProcessor
         except Exception as e:
@@ -639,6 +653,8 @@ class IP2PEmbedMarkTrainer:
                     )
             if pbar is not None:
                 pbar.close()
+
+            self.scheduler.step()
 
             denom = max(1.0, stats["steps"])
             log_interval = max(1, int(getattr(self.args, "log_interval", 10)))

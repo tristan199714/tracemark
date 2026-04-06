@@ -1,7 +1,7 @@
 import os
 
 
-BASE_DATA_ROOT = "/data/Sheldon/diffusion_data"
+BASE_DATA_ROOT = "/sda2/diffusion_data"
 
 DATASET_PATHS = {
     'FFHQ': os.path.join(BASE_DATA_ROOT, 'celeba_hq'),

@@ -50,7 +50,7 @@ def compute_roc_metrics(scores_pos: np.ndarray, scores_neg: np.ndarray):
     fpr = np.array(fpr_list, dtype=float)
     tpr = np.array(tpr_list, dtype=float)
     order = np.argsort(fpr)
-    auc_fn = getattr(np, "trapezoid", np.trapz)
+    auc_fn = getattr(np, "trapezoid", getattr(np, "trapz", None))
     auc = float(auc_fn(tpr[order], fpr[order]))
     acc = float(np.max(1.0 - (fpr + (1.0 - tpr)) / 2.0))
     idx = np.where(fpr < 0.01)[0]

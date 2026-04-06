@@ -22,3 +22,11 @@ Thumbs.db
 
 # Pretrained models
 **/pretrained/
+stargan_v2/feature_data/
+stargan_v2/weights/
+stargan_v2/preview_out/
+asyrp/weights/
+asyrp/out/
+ledits/out/
+swiftedit/out/
+pix2pix-turbo/out/

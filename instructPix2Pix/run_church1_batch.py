@@ -22,7 +22,7 @@ SHARED_ARGS = [
     "--fp16",
     "1",
     "--bs_train",
-    "2",
+    "8",
     "--ip2p_steps",
     "6",
     "--embed_dim",

@@ -163,6 +163,20 @@ def build_dataset_avg(rows: List[Dict[str, object]]) -> List[Dict[str, object]]:
     return avg_rows
 
 
+def group_rows_by_dataset(rows: List[Dict[str, object]]) -> Dict[str, List[Dict[str, object]]]:
+    buckets: Dict[str, List[Dict[str, object]]] = defaultdict(list)
+    for row in rows:
+        dataset = str(row.get("dataset", "")).strip()
+        if not dataset:
+            continue
+        buckets[dataset].append(row)
+    return dict(buckets)
+
+
+def dataset_report_stem(dataset: str) -> str:
+    return dataset.lower().replace("-", "_")
+
+
 def write_csv(rows: List[Dict[str, object]], out_csv: Path) -> None:
     out_csv.parent.mkdir(parents=True, exist_ok=True)
     fieldnames = ["feature"] if not rows else list(rows[0].keys())
@@ -195,6 +209,18 @@ def main():
     avg_csv = report_dir / "dataset_avg.csv"
     write_csv(avg_rows, avg_csv)
     print(f"[summary] wrote {len(avg_rows)} dataset rows to {avg_csv}")
+
+    by_dataset = group_rows_by_dataset(rows)
+    for dataset, dataset_rows in by_dataset.items():
+        stem = dataset_report_stem(dataset)
+        dataset_detail_csv = report_dir / f"detail_{stem}.csv"
+        write_csv(dataset_rows, dataset_detail_csv)
+        print(f"[summary] wrote {len(dataset_rows)} feature rows to {dataset_detail_csv}")
+
+        dataset_avg_rows = build_dataset_avg(dataset_rows)
+        dataset_avg_csv = report_dir / f"dataset_avg_{stem}.csv"
+        write_csv(dataset_avg_rows, dataset_avg_csv)
+        print(f"[summary] wrote {len(dataset_avg_rows)} dataset rows to {dataset_avg_csv}")
 
     for r in avg_rows:
         ds = r["dataset"]

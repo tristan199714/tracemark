@@ -223,6 +223,51 @@ SRC_TRG_TXT_DIC = {
 
 
     # =========================================================
+    # CUB-200-2011 — Bird Local Attributes
+    # =========================================================
+
+    'bird_red_head1': (['Bird'], ['make the bird have a red head.']),
+    'bird_red_head2': (['Bird'], ['change the bird to have red feathers on its head.']),
+    'bird_red_head3': (['Bird'], ['add a red-colored head to the bird.']),
+
+    'bird_black_crown1': (['Bird'], ['make the bird have a black crown on top of its head.']),
+    'bird_black_crown2': (['Bird'], ['add black feathers on the bird’s crown.']),
+    'bird_black_crown3': (['Bird'], ['change the top of the bird’s head to black.']),
+
+    'bird_white_throat1': (['Bird'], ['make the bird have a white throat patch.']),
+    'bird_white_throat2': (['Bird'], ['change the bird so its throat is white.']),
+    'bird_white_throat3': (['Bird'], ['add a white throat area to the bird.']),
+
+    'bird_yellow_belly1': (['Bird'], ['make the bird have a yellow belly.']),
+    'bird_yellow_belly2': (['Bird'], ['change the bird’s underside to yellow.']),
+    'bird_yellow_belly3': (['Bird'], ['add yellow feathers on the bird’s belly.']),
+
+    'bird_blue_wing1': (['Bird'], ['make the bird have blue wings.']),
+    'bird_blue_wing2': (['Bird'], ['change the bird’s wing feathers to blue.']),
+    'bird_blue_wing3': (['Bird'], ['add a blue color to the bird’s wings.']),
+
+    'bird_spotted_wing1': (['Bird'], ['make the bird have spotted wings.']),
+    'bird_spotted_wing2': (['Bird'], ['add spotted markings on the bird’s wings.']),
+    'bird_spotted_wing3': (['Bird'], ['change the wing pattern so the bird has wing spots.']),
+
+    'bird_striped_tail1': (['Bird'], ['make the bird have a striped tail.']),
+    'bird_striped_tail2': (['Bird'], ['add stripe patterns on the bird’s tail feathers.']),
+    'bird_striped_tail3': (['Bird'], ['change the tail feathers to a striped pattern.']),
+
+    'bird_long_beak1': (['Bird'], ['make the bird have a longer beak.']),
+    'bird_long_beak2': (['Bird'], ['extend the bird’s beak.']),
+    'bird_long_beak3': (['Bird'], ['change the bird so it has a long beak.']),
+
+    'bird_short_beak1': (['Bird'], ['make the bird have a shorter beak.']),
+    'bird_short_beak2': (['Bird'], ['shorten the bird’s beak.']),
+    'bird_short_beak3': (['Bird'], ['change the bird so it has a short beak.']),
+
+    'bird_crest1': (['Bird'], ['add a feather crest on the bird’s head.']),
+    'bird_crest2': (['Bird'], ['make the bird have a visible head crest.']),
+    'bird_crest3': (['Bird'], ['change the bird to have crest feathers on top of its head.']),
+
+
+    # =========================================================
     # AFHQ — Dog Face
     # =========================================================
 

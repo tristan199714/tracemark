@@ -1,5 +1,6 @@
 from .AFHQ_dataset import get_afhq_dataset
 from .CelebA_HQ_dataset import get_celeba_dataset
+from .CUB_dataset import get_cub_dataset
 from .LSUN_dataset import get_lsun_dataset
 from torch.utils.data import DataLoader
 from .IMAGENET_dataset import get_imagenet_dataset
@@ -27,6 +28,8 @@ def get_dataset(dataset_type, dataset_paths=None, config=None, target_class_num=
         train_dataset, test_dataset = get_lsun_dataset(dataset_paths['LSUN'], config)
     elif dataset_type == "CelebA_HQ":
         train_dataset, test_dataset = get_celeba_dataset(dataset_paths['CelebA_HQ'], config)
+    elif dataset_type == "CUB_200_2011":
+        train_dataset, test_dataset = get_cub_dataset(dataset_paths['CUB_200_2011'], config)
     elif dataset_type == "IMAGENET":
         train_dataset, test_dataset = get_imagenet_dataset(dataset_paths['IMAGENET'], config, class_num=target_class_num)
     else:

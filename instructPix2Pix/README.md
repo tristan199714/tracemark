@@ -18,6 +18,7 @@ Training is staged:
 - `main.py`: CLI entry.
 - `train.py`: training loop and IP2P calls.
 - `models.py`: writer and detector modules.
+- `datasets/CUB_dataset.py`: CUB-200-2011 loader with train/test split parsing and bird bbox cropping.
 
 ## Run
 
@@ -86,3 +87,55 @@ Outputs are written to:
 - `out/<instruction>/<run_name>/summary.json`
 - `out/<instruction>/<run_name>/eval_auto.json` (when `--auto_eval 1`, includes id/verify + FID/IS/CLIP quality)
 - `out/<instruction>/<run_name>/{orig,pre,wm}` (when `--save_images 1`)
+
+## CUB Support
+
+`CUB-200-2011` is expected under:
+
+```text
+/data/Sheldon/diffusion_data/cub_200_2011/CUB_200_2011/
+  images.txt
+  train_test_split.txt
+  bounding_boxes.txt
+  images/
+```
+
+The loader crops each bird to its annotated bounding box before resizing.
+
+Single run example:
+
+```bash
+CUDA_VISIBLE_DEVICES=4,5,6,7 /home/nvidia/miniconda3/envs/ip2p/bin/torchrun \
+  --nproc_per_node=4 /home/nvidia/Sheldon/tracemark/instructPix2Pix/main.py \
+  --config /home/nvidia/Sheldon/tracemark/instructPix2Pix/configs/cub.yml \
+  --instruction bird_red_head1 \
+  --num_user 100 \
+  --fp16 1 \
+  --bs_train 2 \
+  --embed_dim 128 \
+  --user_dim 64 \
+  --writer_hidden 96 \
+  --writer_blocks 4 \
+  --wm_strength 0.07 \
+  --carr_lambda 0.85 \
+  --sim_lambda 2.0 \
+  --id_lambda 3.2 \
+  --out_decode_lambda 1.4 \
+  --cons_lambda 0.8 \
+  --n_train_img 1404 \
+  --n_iter 170 \
+  --lr 1.8e-4 \
+  --warmup_no_edit_iters 35 \
+  --edit_ramp_iters 90 \
+  --save_images 1 \
+  --auto_eval 1 \
+  --clean_image_out 1 \
+  --batch_pbar 0 \
+  --seed 1234
+```
+
+Batch runner:
+
+```bash
+python /home/nvidia/Sheldon/tracemark/instructPix2Pix/run_bird1_batch.py --dry_run
+```

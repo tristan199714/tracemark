@@ -16,13 +16,13 @@ import torch
 
 SHARED_ARGS = [
     "--config",
-    "configs/celeba.yml",
+    "configs/cub.yml",
     "--num_user",
     "100",
     "--fp16",
     "1",
     "--bs_train",
-    "2",
+    "4",
     "--ip2p_steps",
     "6",
     "--embed_dim",
@@ -68,15 +68,8 @@ SHARED_ARGS = [
 ]
 
 
-def get_human_features() -> List[str]:
-    features: List[str] = []
-    for key in SRC_TRG_TXT_DIC:
-        if not key.endswith("1"):
-            continue
-        if key.startswith(("dog_", "bird_", "church_", "bedroom_")):
-            continue
-        features.append(key)
-    return features
+def get_bird_features() -> List[str]:
+    return [k for k in SRC_TRG_TXT_DIC if k.endswith("1") and k.startswith("bird_")]
 
 
 def has_existing_result(feature: str) -> bool:
@@ -115,22 +108,22 @@ def parse_args():
     n_gpus = torch.cuda.device_count()
     p.add_argument("--nproc_per_node", type=int, default=n_gpus)
     p.add_argument("--master_port", type=int, default=29600)
-    p.add_argument("--start_from", type=str, default="tanned1")
+    p.add_argument("--start_from", type=str, default="bird_red_head1")
     p.add_argument("--dry_run", action="store_true")
     return p.parse_args()
 
 
 def main():
     args = parse_args()
-    features = get_human_features()
+    features = get_bird_features()
     if args.start_from not in features:
-        raise SystemExit(f"start_from not found in human feature list: {args.start_from}")
+        raise SystemExit(f"start_from not found in bird feature list: {args.start_from}")
 
     start_idx = features.index(args.start_from)
     selected = features[start_idx:]
     env = os.environ.copy()
 
-    print(f"[batch] total human features ending with 1: {len(features)}")
+    print(f"[batch] total bird features ending with 1: {len(features)}")
     print(f"[batch] starting from: {args.start_from}")
     print(f"[batch] selected count: {len(selected)}")
     print(f"[batch] CUDA_VISIBLE_DEVICES={env.get('CUDA_VISIBLE_DEVICES', 'all')}")

@@ -55,6 +55,8 @@ def _resolve_feature_run(feature_dir: Path) -> Optional[Path]:
 def _classify_dataset(feature: str) -> str:
     if feature.startswith("dog_"):
         return "AFHQ_Dog"
+    if feature.startswith("bird_"):
+        return "CUB_Bird"
     if feature.startswith("church_"):
         return "LSUN_Church"
     if feature.startswith("bedroom_"):
@@ -141,7 +143,7 @@ def build_dataset_avg(rows: List[Dict[str, object]]) -> List[Dict[str, object]]:
         buckets[row["dataset"]].append(row)
 
     avg_rows = []
-    for dataset in ["CelebA_HQ", "AFHQ_Dog", "LSUN_Church", "LSUN_Bedroom"]:
+    for dataset in ["CelebA_HQ", "AFHQ_Dog", "CUB_Bird", "LSUN_Church", "LSUN_Bedroom"]:
         group = buckets.get(dataset, [])
         if not group:
             continue

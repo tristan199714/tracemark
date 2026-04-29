@@ -80,7 +80,7 @@ def get_human_features() -> List[str]:
     for key in SRC_TRG_TXT_DIC:
         if not key.endswith("1"):
             continue
-        if key.startswith(("dog_", "church_", "bedroom_")):
+        if key.startswith(("dog_", "bird_", "church_", "bedroom_")):
             continue
         features.append(key)
     return features

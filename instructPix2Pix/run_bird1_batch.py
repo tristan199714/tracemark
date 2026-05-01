@@ -109,6 +109,7 @@ def parse_args():
     p.add_argument("--nproc_per_node", type=int, default=n_gpus)
     p.add_argument("--master_port", type=int, default=29600)
     p.add_argument("--start_from", type=str, default="bird_red_head1")
+    p.add_argument("--max_features", type=int, default=0)
     p.add_argument("--dry_run", action="store_true")
     return p.parse_args()
 
@@ -121,10 +122,13 @@ def main():
 
     start_idx = features.index(args.start_from)
     selected = features[start_idx:]
+    if args.max_features > 0:
+        selected = selected[:args.max_features]
     env = os.environ.copy()
 
     print(f"[batch] total bird features ending with 1: {len(features)}")
     print(f"[batch] starting from: {args.start_from}")
+    print(f"[batch] max_features: {args.max_features if args.max_features > 0 else 'all'}")
     print(f"[batch] selected count: {len(selected)}")
     print(f"[batch] CUDA_VISIBLE_DEVICES={env.get('CUDA_VISIBLE_DEVICES', 'all')}")
     print("[batch] auto eval: enabled via --auto_eval 1")

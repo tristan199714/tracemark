@@ -266,6 +266,86 @@ SRC_TRG_TXT_DIC = {
     'bird_crest2': (['Bird'], ['make the bird have a visible head crest.']),
     'bird_crest3': (['Bird'], ['change the bird to have crest feathers on top of its head.']),
 
+    'bird_red_breast1': (['Bird'], ['make the bird have a red breast.']),
+    'bird_red_breast2': (['Bird'], ['change the bird so its breast feathers are red.']),
+    'bird_red_breast3': (['Bird'], ['add a red chest patch to the bird.']),
+
+    'bird_orange_breast1': (['Bird'], ['make the bird have an orange breast.']),
+    'bird_orange_breast2': (['Bird'], ['change the bird so its breast is orange.']),
+    'bird_orange_breast3': (['Bird'], ['add orange breast feathers to the bird.']),
+
+    'bird_black_throat1': (['Bird'], ['make the bird have a black throat patch.']),
+    'bird_black_throat2': (['Bird'], ['change the bird so its throat is black.']),
+    'bird_black_throat3': (['Bird'], ['add a dark black throat area to the bird.']),
+
+    'bird_green_back1': (['Bird'], ['make the bird have a green back.']),
+    'bird_green_back2': (['Bird'], ['change the bird’s back feathers to green.']),
+    'bird_green_back3': (['Bird'], ['add a green color to the bird’s back.']),
+
+    'bird_brown_back1': (['Bird'], ['make the bird have a brown back.']),
+    'bird_brown_back2': (['Bird'], ['change the bird’s back feathers to brown.']),
+    'bird_brown_back3': (['Bird'], ['add brown coloring on the bird’s back.']),
+
+    'bird_white_wing_bar1': (['Bird'], ['make the bird have a white wing bar.']),
+    'bird_white_wing_bar2': (['Bird'], ['add a white stripe across the bird’s wing.']),
+    'bird_white_wing_bar3': (['Bird'], ['change the wing pattern to include a white wing bar.']),
+
+    'bird_grey_wing1': (['Bird'], ['make the bird have grey wings.']),
+    'bird_grey_wing2': (['Bird'], ['change the bird’s wing feathers to grey.']),
+    'bird_grey_wing3': (['Bird'], ['add a grey tone to the bird’s wings.']),
+
+    'bird_blue_tail1': (['Bird'], ['make the bird have a blue tail.']),
+    'bird_blue_tail2': (['Bird'], ['change the bird’s tail feathers to blue.']),
+    'bird_blue_tail3': (['Bird'], ['add blue coloring to the bird’s tail.']),
+
+    'bird_long_tail1': (['Bird'], ['make the bird have a longer tail.']),
+    'bird_long_tail2': (['Bird'], ['extend the bird’s tail feathers.']),
+    'bird_long_tail3': (['Bird'], ['change the bird so it has a long tail.']),
+
+    'bird_short_tail1': (['Bird'], ['make the bird have a shorter tail.']),
+    'bird_short_tail2': (['Bird'], ['shorten the bird’s tail feathers.']),
+    'bird_short_tail3': (['Bird'], ['change the bird so it has a short tail.']),
+
+    'bird_white_eyering1': (['Bird'], ['make the bird have a white eye ring.']),
+    'bird_white_eyering2': (['Bird'], ['add a white ring around the bird’s eye.']),
+    'bird_white_eyering3': (['Bird'], ['change the bird so a white eye ring appears around its eye.']),
+
+    'bird_dark_eyestripe1': (['Bird'], ['make the bird have a dark eye stripe.']),
+    'bird_dark_eyestripe2': (['Bird'], ['add a dark stripe through the bird’s eye area.']),
+    'bird_dark_eyestripe3': (['Bird'], ['change the bird to have a dark stripe across its eye.']),
+
+    'bird_red_beak1': (['Bird'], ['make the bird have a red beak.']),
+    'bird_red_beak2': (['Bird'], ['change the bird’s beak color to red.']),
+    'bird_red_beak3': (['Bird'], ['add a bright red color to the bird’s beak.']),
+
+    'bird_curved_beak1': (['Bird'], ['make the bird have a curved beak.']),
+    'bird_curved_beak2': (['Bird'], ['curve the bird’s beak slightly downward.']),
+    'bird_curved_beak3': (['Bird'], ['change the beak shape so the bird has a curved beak.']),
+
+    'bird_hooked_beak1': (['Bird'], ['make the bird have a hooked beak.']),
+    'bird_hooked_beak2': (['Bird'], ['change the bird’s beak to a hooked shape.']),
+    'bird_hooked_beak3': (['Bird'], ['add a raptor-like hooked beak to the bird.']),
+
+    'bird_yellow_crown1': (['Bird'], ['make the bird have a yellow crown.']),
+    'bird_yellow_crown2': (['Bird'], ['change the feathers on top of the bird’s head to yellow.']),
+    'bird_yellow_crown3': (['Bird'], ['add a yellow crown patch to the bird’s head.']),
+
+    'bird_black_mask1': (['Bird'], ['make the bird have a black mask around its eyes.']),
+    'bird_black_mask2': (['Bird'], ['add dark mask markings around the bird’s eyes.']),
+    'bird_black_mask3': (['Bird'], ['change the face pattern so the bird has a black eye mask.']),
+
+    'bird_speckled_belly1': (['Bird'], ['make the bird have a speckled belly.']),
+    'bird_speckled_belly2': (['Bird'], ['add small speckles on the bird’s underside.']),
+    'bird_speckled_belly3': (['Bird'], ['change the belly pattern so the bird has speckles.']),
+
+    'bird_white_cheek1': (['Bird'], ['make the bird have white cheeks.']),
+    'bird_white_cheek2': (['Bird'], ['change the feathers on the bird’s cheeks to white.']),
+    'bird_white_cheek3': (['Bird'], ['add white cheek patches to the bird.']),
+
+    'bird_white_brow1': (['Bird'], ['make the bird have a white eyebrow stripe.']),
+    'bird_white_brow2': (['Bird'], ['add a white stripe above the bird’s eye.']),
+    'bird_white_brow3': (['Bird'], ['change the head markings so the bird has a white brow stripe.']),
+
 
     # =========================================================
     # AFHQ — Dog Face

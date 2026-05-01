@@ -5,6 +5,7 @@ from typing import Dict, List
 from PIL import Image
 from torch.utils.data import Dataset
 import torchvision.transforms as tfs
+from .CelebA_HQ_dataset import MultiResolutionDataset
 
 
 def _read_id_map(path: Path) -> Dict[int, str]:
@@ -53,6 +54,11 @@ def _resolve_cub_root(data_root: str) -> Path:
     raise FileNotFoundError(
         f"CUB root not found under {data_root}. Expected images.txt and train_test_split.txt."
     )
+
+
+def _has_lmdb_cache(data_root: str) -> bool:
+    root = Path(data_root)
+    return (root / "LMDB_train").exists() and (root / "LMDB_test").exists()
 
 
 class CUBDataset(Dataset):
@@ -144,6 +150,19 @@ def get_cub_dataset(data_root, config):
 
     crop_to_bbox = bool(getattr(config.data, "crop_to_bbox", True))
     bbox_pad_frac = float(getattr(config.data, "bbox_pad_frac", 0.10))
+
+    if _has_lmdb_cache(data_root):
+        train_dataset = MultiResolutionDataset(
+            os.path.join(data_root, "LMDB_train"),
+            train_transform,
+            config.data.image_size,
+        )
+        test_dataset = MultiResolutionDataset(
+            os.path.join(data_root, "LMDB_test"),
+            test_transform,
+            config.data.image_size,
+        )
+        return train_dataset, test_dataset
 
     train_dataset = CUBDataset(
         data_root,

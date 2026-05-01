@@ -8,7 +8,7 @@ data:
     gaussian_dequantization: false
     random_flip: true
     rescaled: true
-    num_workers: 0
+    num_workers: 8
     crop_to_bbox: true
     bbox_pad_frac: 0.10
 

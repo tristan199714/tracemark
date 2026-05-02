@@ -192,27 +192,41 @@ class IP2PEmbedMarkTrainer:
             fn = fn.__wrapped__
         return fn(self.pipe, **kwargs)
 
-    def edit(self, img01: torch.Tensor, seed: int) -> torch.Tensor:
-        g = torch.Generator(device=self.device).manual_seed(seed)
+    def edit_batch(self, img01: torch.Tensor, seeds) -> torch.Tensor:
         pipe_dtype = next(self.pipe.unet.parameters()).dtype
         vae_dtype = next(self.pipe.vae.parameters()).dtype
         image = img01.unsqueeze(0) if img01.dim() == 3 else img01
         image = image.to(device=self.device, dtype=pipe_dtype)
-        latents = self._pipe_call_with_grad(
-            prompt=self.instruction,
-            image=image,
-            generator=g,
-            num_inference_steps=self.args.ip2p_steps,
-            guidance_scale=self.args.guidance_scale,
-            image_guidance_scale=self.args.image_guidance_scale,
-            output_type="latent",
-        ).images
-        latents = latents.to(dtype=vae_dtype)
-        imgs = self.pipe.vae.decode(
-            latents / self.pipe.vae.config.scaling_factor,
-            return_dict=False,
-        )[0]
-        return (imgs / 2 + 0.5).clamp(0, 1)
+        seeds = [int(s) for s in seeds]
+        micro_bsz = max(1, int(getattr(self.args, "ip2p_batch_size", 1)))
+
+        outputs = []
+        for start in range(0, image.shape[0], micro_bsz):
+            end = min(start + micro_bsz, image.shape[0])
+            chunk = image[start:end]
+            generators = [
+                torch.Generator(device=self.device).manual_seed(seed)
+                for seed in seeds[start:end]
+            ]
+            latents = self._pipe_call_with_grad(
+                prompt=[self.instruction] * (end - start),
+                image=chunk,
+                generator=generators,
+                num_inference_steps=self.args.ip2p_steps,
+                guidance_scale=self.args.guidance_scale,
+                image_guidance_scale=self.args.image_guidance_scale,
+                output_type="latent",
+            ).images
+            latents = latents.to(dtype=vae_dtype)
+            imgs = self.pipe.vae.decode(
+                latents / self.pipe.vae.config.scaling_factor,
+                return_dict=False,
+            )[0]
+            outputs.append((imgs / 2 + 0.5).clamp(0, 1))
+        return torch.cat(outputs, dim=0)
+
+    def edit(self, img01: torch.Tensor, seed: int) -> torch.Tensor:
+        return self.edit_batch(img01, [seed])
 
     def _iter_p_edit(self, iter_idx: int) -> float:
         if iter_idx < self.args.warmup_no_edit_iters:
@@ -517,87 +531,92 @@ class IP2PEmbedMarkTrainer:
                 batch_acc_out_total = 0.0
                 batch_acc_mix_total = 0.0
 
-                sample_losses = []
-                for b in range(bsz):
-                    global_sample_idx = step * self.world_size * self.args.bs_train + self.rank * self.args.bs_train + b
-                    global_id = iter_idx * self.args.n_train_img + global_sample_idx
-                    uid = int(global_id % self.args.num_user)
-                    user_id_t = torch.tensor([uid], device=self.device, dtype=torch.long)
+                base_sample_idx = step * self.world_size * self.args.bs_train + self.rank * self.args.bs_train
+                global_sample_indices = [base_sample_idx + b for b in range(bsz)]
+                global_ids = [
+                    iter_idx * self.args.n_train_img + sample_idx
+                    for sample_idx in global_sample_indices
+                ]
+                user_ids = torch.tensor(
+                    [int(global_id % self.args.num_user) for global_id in global_ids],
+                    device=self.device,
+                    dtype=torch.long,
+                )
 
-                    img_b = img[b:b + 1]
-                    img01_b = img01[b:b + 1]
-                    wm = self.writer(img_b, user_id_t, self.args.wm_strength)
-                    wm01 = ((wm + 1) * 0.5).clamp(0, 1)
+                wm = self.writer(img, user_ids, self.args.wm_strength)
+                wm01 = ((wm + 1) * 0.5).clamp(0, 1)
 
-                    seed = self.args.seed + int(global_id)
-                    if p_edit > 0.0:
-                        with torch.no_grad():
-                            pre = self.edit(img01_b[0], seed)
-                        out = self.edit(wm01[0], seed)
-                    else:
-                        pre = img01_b
-                        out = wm01
-
-                    out = out.to(self.device)
-                    pre = pre.to(self.device)
-                    if out.shape[-1] != self.args.resolution:
-                        out = F.interpolate(out, size=(self.args.resolution, self.args.resolution), mode="bilinear", align_corners=False)
-                    if pre.shape[-1] != self.args.resolution:
-                        pre = F.interpolate(pre, size=(self.args.resolution, self.args.resolution), mode="bilinear", align_corners=False)
-
-                    wm_t = wm
-                    out_t = out * 2 - 1
-                    det_dtype = next(self._unwrap_module(self.detector).parameters()).dtype
-                    if wm_t.dtype != det_dtype:
-                        wm_t = wm_t.to(det_dtype)
-                    if out_t.dtype != det_dtype:
-                        out_t = out_t.to(det_dtype)
-
-                    emb_wm, logits_wm = self.detector(wm_t)
-                    emb_out, logits_out = self.detector(out_t)
-
-                    id_wm = F.cross_entropy(logits_wm, user_id_t)
-                    id_out = F.cross_entropy(logits_out, user_id_t)
-                    id_loss = self.args.wm_decode_lambda * id_wm + self.args.out_decode_lambda * p_edit * id_out
-
-                    sim_loss = F.l1_loss(out, pre)
-                    car_loss = F.l1_loss(wm01, img01_b)
-                    cos = F.cosine_similarity(emb_wm, emb_out, dim=-1)
-                    cons_loss = (1.0 - cos).mean()
-
-                    loss = (
-                        self.args.id_lambda * id_loss
-                        + self.args.sim_lambda * p_edit * sim_loss
-                        + self.args.carr_lambda * car_loss
-                        + self.args.cons_lambda * p_edit * cons_loss
-                    )
-                    sample_losses.append(loss)
-
+                seeds = [self.args.seed + int(global_id) for global_id in global_ids]
+                if p_edit > 0.0:
                     with torch.no_grad():
-                        acc_wm = (torch.argmax(logits_wm, dim=1) == user_id_t).float().mean().item()
-                        acc_out = (torch.argmax(logits_out, dim=1) == user_id_t).float().mean().item()
-                        acc_mix = (1.0 - p_edit) * acc_wm + p_edit * acc_out
+                        pre = self.edit_batch(img01, seeds)
+                    out = self.edit_batch(wm01, seeds)
+                else:
+                    pre = img01
+                    out = wm01
 
-                    batch_loss_total += float(loss.item())
-                    batch_id_total += float(id_loss.item())
-                    batch_sim_total += float((p_edit * sim_loss).item())
-                    batch_car_total += float(car_loss.item())
-                    batch_cons_total += float((p_edit * cons_loss).item())
-                    batch_acc_wm_total += float(acc_wm)
-                    batch_acc_out_total += float(acc_out)
-                    batch_acc_mix_total += float(acc_mix)
+                out = out.to(self.device)
+                pre = pre.to(self.device)
+                if out.shape[-1] != self.args.resolution:
+                    out = F.interpolate(out, size=(self.args.resolution, self.args.resolution), mode="bilinear", align_corners=False)
+                if pre.shape[-1] != self.args.resolution:
+                    pre = F.interpolate(pre, size=(self.args.resolution, self.args.resolution), mode="bilinear", align_corners=False)
 
+                wm_t = wm
+                out_t = out * 2 - 1
+                det_dtype = next(self._unwrap_module(self.detector).parameters()).dtype
+                if wm_t.dtype != det_dtype:
+                    wm_t = wm_t.to(det_dtype)
+                if out_t.dtype != det_dtype:
+                    out_t = out_t.to(det_dtype)
+
+                emb_wm, logits_wm = self.detector(wm_t)
+                emb_out, logits_out = self.detector(out_t)
+
+                id_wm = F.cross_entropy(logits_wm, user_ids)
+                id_out = F.cross_entropy(logits_out, user_ids)
+                id_loss = self.args.wm_decode_lambda * id_wm + self.args.out_decode_lambda * p_edit * id_out
+
+                sim_loss = F.l1_loss(out, pre)
+                car_loss = F.l1_loss(wm01, img01)
+                cos = F.cosine_similarity(emb_wm, emb_out, dim=-1)
+                cons_loss = (1.0 - cos).mean()
+
+                batch_loss = (
+                    self.args.id_lambda * id_loss
+                    + self.args.sim_lambda * p_edit * sim_loss
+                    + self.args.carr_lambda * car_loss
+                    + self.args.cons_lambda * p_edit * cons_loss
+                )
+
+                with torch.no_grad():
+                    acc_wm = (torch.argmax(logits_wm, dim=1) == user_ids).float().mean().item()
+                    acc_out = (torch.argmax(logits_out, dim=1) == user_ids).float().mean().item()
+                    acc_mix = (1.0 - p_edit) * acc_wm + p_edit * acc_out
+
+                batch_loss_total += float(batch_loss.item()) * bsz
+                batch_id_total += float(id_loss.item()) * bsz
+                batch_sim_total += float((p_edit * sim_loss).item()) * bsz
+                batch_car_total += float(car_loss.item()) * bsz
+                batch_cons_total += float((p_edit * cons_loss).item()) * bsz
+                batch_acc_wm_total += float(acc_wm) * bsz
+                batch_acc_out_total += float(acc_out) * bsz
+                batch_acc_mix_total += float(acc_mix) * bsz
+
+                is_saved = bool(iter_idx == self.args.n_iter - 1 and self.args.save_images)
+                for b, (global_sample_idx, global_id, uid, seed) in enumerate(
+                    zip(global_sample_indices, global_ids, user_ids.tolist(), seeds)
+                ):
                     fn = f"{int(global_sample_idx):0{filename_width}d}.png"
-                    is_saved = bool(iter_idx == self.args.n_iter - 1 and self.args.save_images)
                     if is_saved:
-                        to_pil(img01_b[0]).save(self.image_out_root / "orig" / fn)
-                        to_pil(pre[0]).save(self.image_out_root / "pre" / fn)
-                        to_pil(out[0]).save(self.image_out_root / "wm" / fn)
+                        to_pil(img01[b]).save(self.image_out_root / "orig" / fn)
+                        to_pil(pre[b]).save(self.image_out_root / "pre" / fn)
+                        to_pil(out[b]).save(self.image_out_root / "wm" / fn)
 
                     records.append(
                         {
                             "index": int(global_id),
-                            "uid": uid,
+                            "uid": int(uid),
                             "seed": int(seed),
                             "filename": fn,
                             "saved": is_saved,
@@ -606,7 +625,6 @@ class IP2PEmbedMarkTrainer:
                         }
                     )
 
-                batch_loss = torch.stack(sample_losses, dim=0).mean()
                 self.optimizer.zero_grad()
                 batch_loss.backward()
                 self.optimizer.step()

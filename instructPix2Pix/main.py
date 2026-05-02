@@ -136,6 +136,7 @@ def parse_args():
 
     p.add_argument("--resolution", type=int, default=256)
     p.add_argument("--ip2p_steps", type=int, default=6)
+    p.add_argument("--ip2p_batch_size", type=int, default=1)
     p.add_argument("--guidance_scale", type=float, default=7.0)
     p.add_argument("--image_guidance_scale", type=float, default=2.0)
     p.add_argument("--fp16", type=int, default=0)
